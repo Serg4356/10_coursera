@@ -54,7 +54,8 @@ def output_courses_info_to_xlsx(filepath, courses_info):
 
 
 if __name__ == '__main__':
-    courses_list = get_courses_list(20)
+    courses_number = 20
+    courses_list = get_courses_list(courses_number)
     courses_info = []
     for course in courses_list:
         print(course)
