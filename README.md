@@ -18,14 +18,7 @@ Programm takes path to folder as an argument. Like this:
 $ python coursera.py G:\courses
 ```
 
-Example of programm output:
-
-```bash
-https://www.coursera.org/learn/kennedy
-{'name': 'The Kennedy Half Century | Coursera', 'average_grade': '4.6 stars', 'weeks_required': 'English', 'language': 'English', 'start': 'Starts Jan 29'}
-```
-
-Also you can find courses.xls file in specified folder(G:\courses\).
+After the completion of the program you can find courses.xls file in specified folder(G:\courses).
 
 # Project Goals
 
