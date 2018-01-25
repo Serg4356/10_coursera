@@ -82,13 +82,13 @@ def create_parser():
     return parser
 
 
-def prettify_output(course_info):
-    course_info_str = ''
-    for course_attr in course_info:
-        course_info_str += '{} - {}\n'.format(
-            course_attr,
-            course_info[course_attr])
-    return course_info_str
+def output_courses_to_console(course_info, output_need):
+    print('\n')
+    if output_need:
+        for course_attr in course_info:
+            print('{} - {}'.format(
+                course_attr,
+                course_info[course_attr]))
 
 
 if __name__ == '__main__':
@@ -107,16 +107,13 @@ if __name__ == '__main__':
     courses_info = []
     for course in courses_link_list:
         http_response_course_info = get_http_response(course)
-        if parser.parse_args().output:
-            print(course)
-            print(
-                prettify_output(
-                    get_course_info(
-                        course_attr_names,
-                        http_response_course_info)))
-        courses_info.append(
-            get_course_info(course,
-                            http_response_course_info))
+        course_info = get_course_info(course_attr_names,
+                                      http_response_course_info)
+        output_courses_to_console(
+            course_info,
+            parser.parse_args().output)
+        courses_info.append(course_info)
+
     try:
         courses_book = output_courses_info_to_xls(
             courses_info,
