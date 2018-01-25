@@ -3,20 +3,20 @@ import openpyxl
 from lxml import etree
 from bs4 import BeautifulSoup
 import sys
+import os
+import argparse
 
 
-def get_courses_link_list(courses_number):
-    response = get_http_response('https://www.coursera.org/sitemap~www~courses.xml')
-    etree_courses = etree.fromstring(response.content)
+def get_courses_link_list(courses_number, http_response):
+    etree_courses = etree.fromstring(http_response.content)
     courses_link_list = []
     for child in etree_courses.getchildren():
         courses_link_list.append(child.getchildren()[0].text)
     return courses_link_list[-courses_number:]
 
 
-def get_course_info(course_link, course_attr_names):
-    response = get_http_response(course_link)
-    soup = BeautifulSoup(response.text, 'html.parser')
+def get_course_info(course_attr_names, http_response):
+    soup = BeautifulSoup(http_response.text, 'html.parser')
     course_info = {}
     course_info[course_attr_names[0]] = soup.title.string
     try:
@@ -46,19 +46,18 @@ def get_course_info(course_link, course_attr_names):
     course_info[course_attr_names[4]] = soup.find(
         'div',
         attrs='startdate rc-StartDateString caption-text').text
-
     return course_info
 
 
 def output_courses_info_to_xls(courses_info, course_attr_names):
     courses_workbook = openpyxl.Workbook()
     work_sheet = courses_workbook.create_sheet('coursera_courses')
-    for column, course_attr_name in enumerate(course_attr_names):
-        work_sheet.cell(row=1, column=column+2).value = course_attr_name
-    for row, course in enumerate(courses_info):
-        for column, key in enumerate(course.keys()):
-            work_sheet.cell(row=row + 2, column=1).value = row
-            work_sheet.cell(row=row + 2, column=column+2).value = course[key]
+    for column, course_attr_name in enumerate(course_attr_names, start=2):
+        work_sheet.cell(row=1, column=column).value = course_attr_name
+    for row, course in enumerate(courses_info, start=2):
+        for column, key in enumerate(course.keys(), start=2):
+            work_sheet.cell(row=row, column=1).value = row
+            work_sheet.cell(row=row, column=column).value = course[key]
     return courses_workbook
 
 
@@ -66,24 +65,66 @@ def get_http_response(link):
     return requests.get(link)
 
 
+def create_parser():
+    parser = argparse.ArgumentParser(
+        description='Programm searches for courses '
+                    'information on coursera.org, and '
+                    'outputs them into Excel file')
+    parser.add_argument('-d',
+                        '--display',
+                        type=bool,
+                        default=False,
+                        help='input True to display parsing result')
+    parser.add_argument('-o',
+                        '--output',
+                        default='',
+                        help='path to result file')
+    return parser
+
+
+def prettify_output(course_info):
+    course_info_str = ''
+    for course_attr in course_info:
+        course_info_str += '{} - {}\n'.format(
+            course_attr,
+            course_info[course_attr])
+    return course_info_str
+
+
 if __name__ == '__main__':
+    parser = create_parser()
     courses_number = 20
     course_attr_names = ['name',
                          'average grade',
                          'weeks required',
                          'language',
                          'start']
-    courses_link_list = get_courses_link_list(courses_number)
+    http_response_links = get_http_response(
+        'https://www.coursera.org/sitemap~www~courses.xml')
+    courses_link_list = get_courses_link_list(
+        courses_number,
+        http_response_links)
     courses_info = []
     for course in courses_link_list:
-        print(course)
-        print(get_course_info(course, course_attr_names))
-        courses_info.append(get_course_info(course, course_attr_names))
+        http_response_course_info = get_http_response(course)
+        if parser.parse_args().output:
+            print(course)
+            print(
+                prettify_output(
+                    get_course_info(
+                        course_attr_names,
+                        http_response_course_info)))
+        courses_info.append(
+            get_course_info(course,
+                            http_response_course_info))
     try:
         courses_book = output_courses_info_to_xls(
             courses_info,
             course_attr_names)
-        courses_book.save('{}\courses.xls'.format(sys.argv[1]))
+        courses_book.save(
+            os.path.join(
+                parser.parse_args().output,
+                'courses.xls'))
     except IndexError:
         print('Error! Input path to folder.')
     except PermissionError:
