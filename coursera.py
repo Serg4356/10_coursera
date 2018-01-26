@@ -20,21 +20,16 @@ def get_course_info(http_response):
     course_info = {}
     course_info['name'] = soup.h1.string
     try:
-        course_info['average grade'] = soup.find(
-            'div',
-            attrs={'class': 'ratings-text'}
-        ).find('span').text
+        course_info['average grade'] = soup.select_one(
+            'div.ratings-text'
+        ).span.text
     except AttributeError:
         course_info['average_grade'] = None
-    course_info['weeks required'] = len(soup.find_all('div', attrs={'class':'week'}))
-    course_info['language'] = soup.find(
-        'table',
-        attrs={'class': 'basic-info-table bt3-table bt3-table-striped '
-                        'bt3-table-bordered bt3-table-responsive'}
-    ).find('div', attrs={'class': 'rc-Language'}).text
-    course_info['start'] = soup.find(
-        'div',
-        attrs='startdate rc-StartDateString caption-text').text
+    course_info['weeks required'] = len(
+        soup.find_all('div', attrs={'class': 'week'})
+    )
+    course_info['language'] = soup.select_one('div.rc-Language').text
+    course_info['start'] = soup.select_one('div.rc-StartDateString').text
     return course_info
 
 
