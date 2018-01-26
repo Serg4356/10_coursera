@@ -24,7 +24,7 @@ def get_course_info(http_content):
             'div.ratings-text'
         ).span.text
     except AttributeError:
-        course_info['average_grade'] = None
+        course_info['average grade'] = None
     course_info['weeks required'] = len(
         soup.find_all('div', attrs={'class': 'week'})
     )
@@ -39,11 +39,17 @@ def output_courses_info_to_xls(courses_info):
     work_sheet.title = 'coursera_courses'
     work_sheet.append(list(courses_info[0].keys()))
     for course in courses_info:
-        work_sheet.append(list(course.values()))
+        work_sheet.append([
+            course['name'],
+            course['average grade'],
+            course['weeks required'],
+            course['language'],
+            course['start']
+        ])
     return courses_workbook
 
 
-def fetch_http_response(link):
+def fetch_page_content(link):
     return requests.get(link).content
 
 
@@ -69,9 +75,8 @@ def create_parser():
     return parser
 
 
-def output_courses_to_console(course_info, display_need):
-    print('\n')
-    if display_need:
+def output_courses_to_console(course_info):
+        print('\n')
         for course_attr in course_info:
             print('{} - {}'.format(
                 course_attr,
@@ -81,10 +86,11 @@ def output_courses_to_console(course_info, display_need):
 
 if __name__ == '__main__':
     parser = create_parser()
-    excel_output = parser.parse_args().output
-    display_need = parser.parse_args().display
+    options = parser.parse_args()
+    excel_output = options.output
+    display_need = options.display
     courses_number = 20
-    coursera_links_xml = fetch_http_response(
+    coursera_links_xml = fetch_page_content(
         'https://www.coursera.org/sitemap~www~courses.xml'
     )
     courses_link_list = get_courses_link_list(
@@ -93,12 +99,10 @@ if __name__ == '__main__':
     )
     courses_info = []
     for course in courses_link_list:
-        course_page = fetch_http_response(course)
+        course_page = fetch_page_content(course)
         course_info = get_course_info(course_page)
-        output_courses_to_console(
-            course_info,
-            display_need
-        )
+        if display_need:
+            output_courses_to_console(course_info)
         courses_info.append(course_info)
     try:
         courses_book = output_courses_info_to_xls(
@@ -110,7 +114,5 @@ if __name__ == '__main__':
                 'courses.xls'
             )
         )
-    except IndexError:
-        print('Error! Input path to folder.')
     except PermissionError:
         print('Error! Please, close target excel file')
