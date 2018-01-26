@@ -24,25 +24,25 @@ into Excel file
 optional arguments:
   -h, --help            show this help message and exit
   -d DISPLAY, --display DISPLAY
-                        input True to display parsing result
+                        True to display parsing result
   -o OUTPUT, --output OUTPUT
-                        path to result file
+                        Path to folder
 ```
 
 Example of programm output:
 ```bash
 $ python coursera.py -o C:\devman -d True
 https://www.coursera.org/learn/job-interview-capstone
-name - How To Land the Job You Want (Capstone Project) | Coursera
+name - How To Land the Job You Want (Capstone Project)
 average_grade - None
-weeks required - 8 weeks of study, 3-4 hours/week
+weeks required - 8
 language - English
 start - Starts Feb 05
 
 https://www.coursera.org/learn/network-security-communications-sscp
-name - Networks and Communications Security | Coursera
+name - Networks and Communications Security
 average_grade - None
-weeks required - None
+weeks required - 4
 language - English
 start - Starting 19 March
 ```
@@ -52,4 +52,3 @@ After the completion of the program you can find courses.xls file in specified f
 # Project Goals
 
 The code is written for educational purposes. Training course for web-developers - [DEVMAN.org](https://devman.org)
-

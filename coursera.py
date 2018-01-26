@@ -8,42 +8,31 @@ import argparse
 
 
 def get_courses_link_list(courses_number, http_response):
-    etree_courses = etree.fromstring(http_response.content)
+    etree_courses = etree.fromstring(http_response)
     courses_link_list = []
     for child in etree_courses.getchildren():
         courses_link_list.append(child.getchildren()[0].text)
     return courses_link_list[-courses_number:]
 
 
-def get_course_info(course_attr_names, http_response):
-    soup = BeautifulSoup(http_response.text, 'html.parser')
+def get_course_info(http_response):
+    soup = BeautifulSoup(http_response, 'html.parser')
     course_info = {}
-    course_info[course_attr_names[0]] = soup.title.string
+    course_info['name'] = soup.h1.string
     try:
-        course_info[course_attr_names[1]] = soup.find(
+        course_info['average grade'] = soup.find(
             'div',
-            attrs={'class': 'ratings-text bt3-visible-xs'}
+            attrs={'class': 'ratings-text'}
         ).find('span').text
     except AttributeError:
         course_info['average_grade'] = None
-    try:
-        course_info[course_attr_names[2]] = soup.find(
-            'table',
-            attrs={'class': 'basic-info-table '
-                            'bt3-table bt3-table-striped '
-                            'bt3-table-bordered bt3-table-responsive'}).find(
-            'i',
-            attrs={'class': 'cif-clock'}).parent.parent.find(
-            'td',
-            attrs={'class': 'td-data'}).text
-    except AttributeError:
-        course_info[course_attr_names[2]] = None
-    course_info[course_attr_names[3]] = soup.find(
+    course_info['weeks required'] = len(soup.find_all('div', attrs={'class':'week'}))
+    course_info['language'] = soup.find(
         'table',
         attrs={'class': 'basic-info-table bt3-table bt3-table-striped '
                         'bt3-table-bordered bt3-table-responsive'}
     ).find('div', attrs={'class': 'rc-Language'}).text
-    course_info[course_attr_names[4]] = soup.find(
+    course_info['start'] = soup.find(
         'div',
         attrs='startdate rc-StartDateString caption-text').text
     return course_info
@@ -74,11 +63,11 @@ def create_parser():
                         '--display',
                         type=bool,
                         default=False,
-                        help='input True to display parsing result')
+                        help='True to display parsing result')
     parser.add_argument('-o',
                         '--output',
                         default='',
-                        help='path to result file')
+                        help='Path to folder')
     return parser
 
 
@@ -103,15 +92,15 @@ if __name__ == '__main__':
         'https://www.coursera.org/sitemap~www~courses.xml')
     courses_link_list = get_courses_link_list(
         courses_number,
-        http_response_links)
+        http_response_links.content)
     courses_info = []
+    excel_output = parser.parse_args().output
     for course in courses_link_list:
         http_response_course_info = get_http_response(course)
-        course_info = get_course_info(course_attr_names,
-                                      http_response_course_info)
+        course_info = get_course_info(http_response_course_info.text)
         output_courses_to_console(
             course_info,
-            parser.parse_args().output)
+            excel_output)
         courses_info.append(course_info)
 
     try:
