@@ -18,7 +18,7 @@ def get_courses_link_list(courses_number, http_response):
 def get_course_info(http_response):
     soup = BeautifulSoup(http_response, 'html.parser')
     course_info = {}
-    course_info['name'] = soup.h1.string
+    course_info['name'] = soup.h1.text
     try:
         course_info['average grade'] = soup.select_one(
             'div.ratings-text'
@@ -45,24 +45,29 @@ def output_courses_info_to_xls(courses_info, course_attr_names):
     return courses_workbook
 
 
-def get_http_response(link):
-    return requests.get(link)
+def fetch_http_response(link):
+    return requests.get(link).content
 
 
 def create_parser():
     parser = argparse.ArgumentParser(
         description='Programm searches for courses '
                     'information on coursera.org, and '
-                    'outputs them into Excel file')
-    parser.add_argument('-d',
-                        '--display',
-                        type=bool,
-                        default=False,
-                        help='True to display parsing result')
-    parser.add_argument('-o',
-                        '--output',
-                        default='',
-                        help='Path to folder')
+                    'outputs them into Excel file'
+    )
+    parser.add_argument(
+        '-d',
+        '--display',
+        type=bool,
+        default=False,
+        help='True to display parsing result'
+    )
+    parser.add_argument(
+        '-o',
+        '--output',
+        default='',
+        help='Path to folder'
+    )
     return parser
 
 
@@ -72,32 +77,37 @@ def output_courses_to_console(course_info, output_need):
         for course_attr in course_info:
             print('{} - {}'.format(
                 course_attr,
-                course_info[course_attr]))
+                course_info[course_attr])
+            )
 
 
 if __name__ == '__main__':
     parser = create_parser()
     courses_number = 20
-    course_attr_names = ['name',
-                         'average grade',
-                         'weeks required',
-                         'language',
-                         'start']
-    http_response_links = get_http_response(
-        'https://www.coursera.org/sitemap~www~courses.xml')
+    course_attr_names = [
+        'name',
+        'average grade',
+        'weeks required',
+        'language',
+        'start'
+    ]
+    coursera_links_xml = fetch_http_response(
+        'https://www.coursera.org/sitemap~www~courses.xml'
+    )
     courses_link_list = get_courses_link_list(
         courses_number,
-        http_response_links.content)
+        coursera_links_xml
+    )
     courses_info = []
     excel_output = parser.parse_args().output
     for course in courses_link_list:
-        http_response_course_info = get_http_response(course)
-        course_info = get_course_info(http_response_course_info.text)
+        course_page = fetch_http_response(course)
+        course_info = get_course_info(course_page)
         output_courses_to_console(
             course_info,
-            excel_output)
+            excel_output
+        )
         courses_info.append(course_info)
-
     try:
         courses_book = output_courses_info_to_xls(
             courses_info,
@@ -105,7 +115,8 @@ if __name__ == '__main__':
         courses_book.save(
             os.path.join(
                 parser.parse_args().output,
-                'courses.xls'))
+                'courses.xls')
+        )
     except IndexError:
         print('Error! Input path to folder.')
     except PermissionError:
